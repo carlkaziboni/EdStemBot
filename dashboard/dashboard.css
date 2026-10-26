@@ -1,0 +1,575 @@
+/* 
+ * shadcn/ui Design System — Tailored for EdStemBot Lecturer Dashboard
+ * Dark mode default with zinc/slate tokens, 1px borders, and refined typography.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    /* shadcn dark mode zinc palette */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 4.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 4.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+
+    --radius: 0.625rem;
+    /* 10px */
+
+    /* shadcn charts palette */
+    --chart-1: 221.2 83.2% 53.3%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 160 84% 39%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 35 92% 52%;
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-color: hsl(var(--border));
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Top Navigation Bar (shadcn style) ────────────────────────────────────── */
+.nav-header {
+    border-bottom: 1px solid hsl(var(--border));
+    background-color: hsla(var(--background) / 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+}
+
+.nav-container {
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+}
+
+.brand-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    text-decoration: none;
+    color: hsl(var(--foreground));
+}
+
+.brand-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: calc(var(--radius) - 2px);
+    background-color: hsl(var(--foreground));
+    color: hsl(var(--background));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.brand-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.brand-title .course-tag {
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+    font-weight: 400;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: calc(var(--radius) - 4px);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.nav-item:hover {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--accent));
+}
+
+.nav-item.active {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--secondary));
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* ── Buttons (shadcn button styles) ───────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0.5rem 1rem;
+    height: 2.25rem;
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+}
+
+.btn-secondary:hover {
+    background-color: hsl(var(--secondary) / 0.8);
+}
+
+.btn-outline {
+    border-color: hsl(var(--border));
+    background-color: transparent;
+    color: hsl(var(--foreground));
+}
+
+.btn-outline:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: hsl(var(--muted-foreground));
+}
+
+.btn-ghost:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--foreground));
+}
+
+.btn-sm {
+    height: 2rem;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+}
+
+.btn-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+}
+
+/* ── Badges (shadcn badge styles) ─────────────────────────────────────────── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.25;
+    transition: background-color 0.15s ease;
+}
+
+.badge-default {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+}
+
+.badge-secondary {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    border-color: hsl(var(--border));
+}
+
+.badge-outline {
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+    background-color: transparent;
+}
+
+.badge-destructive {
+    background-color: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+}
+
+.badge-success {
+    background-color: hsla(160, 84%, 39%, 0.15);
+    color: hsl(160, 84%, 49%);
+    border-color: hsla(160, 84%, 39%, 0.3);
+}
+
+.badge-warning {
+    background-color: hsla(35, 92%, 52%, 0.15);
+    color: hsl(35, 92%, 62%);
+    border-color: hsla(35, 92%, 52%, 0.3);
+}
+
+.badge-topic {
+    background-color: hsla(221.2, 83.2%, 53.3%, 0.12);
+    color: hsl(212, 95%, 68%);
+    border-color: hsla(221.2, 83.2%, 53.3%, 0.25);
+    font-weight: 500;
+}
+
+/* ── Live Status Pulse ────────────────────────────────────────────────────── */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    background-color: hsl(var(--secondary));
+    border: 1px solid hsl(var(--border));
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: hsl(160, 84%, 49%);
+    box-shadow: 0 0 8px hsl(160, 84%, 49%);
+}
+
+/* ── Layout & Container ───────────────────────────────────────────────────── */
+.main-content {
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    flex: 1;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.25rem;
+}
+
+.page-header-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: hsl(var(--foreground));
+}
+
+.page-header-text p {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    margin-top: 0.125rem;
+}
+
+/* ── Cards (shadcn card component) ────────────────────────────────────────── */
+.card {
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+    transition: border-color 0.15s ease;
+}
+
+.card:hover {
+    border-color: hsla(0, 0%, 100%, 0.18);
+}
+
+.card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 1.5rem 1.5rem 1rem;
+}
+
+.card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: hsl(var(--foreground));
+}
+
+.card-description {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+}
+
+.card-content {
+    padding: 0 1.5rem 1.5rem;
+}
+
+/* ── Metric / KPI Cards (shadcn dashboard stats) ──────────────────────────── */
+.grid-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stat-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+}
+
+.stat-icon {
+    color: hsl(var(--muted-foreground));
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: hsl(var(--foreground));
+    margin-top: 0.25rem;
+}
+
+.stat-footer {
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* ── Content Grids ────────────────────────────────────────────────────────── */
+.grid-2col {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+.grid-1col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+/* ── Tables (shadcn table component) ──────────────────────────────────────── */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    caption-side: bottom;
+    font-size: 0.875rem;
+    border-collapse: collapse;
+}
+
+.table thead tr {
+    border-bottom: 1px solid hsl(var(--border));
+}
+
+.table th {
+    height: 2.5rem;
+    padding: 0 1rem;
+    text-align: left;
+    vertical-align: middle;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid hsl(var(--border));
+    transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+    background-color: hsla(var(--muted) / 0.5);
+}
+
+.table td {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+    color: hsl(var(--foreground));
+}
+
+/* ── Heatmap Grid (Zinc styled) ───────────────────────────────────────────── */
+.heatmap-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+}
+
+.heatmap-row {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.heatmap-label {
+    width: 36px;
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+    font-weight: 500;
+}
+
+.heatmap-cells {
+    display: flex;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.heatmap-cell {
+    flex: 1;
+    height: 20px;
+    border-radius: 3px;
+    background-color: hsl(var(--secondary));
+    transition: transform 0.1s ease, background-color 0.15s ease;
+    cursor: pointer;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.2);
+    z-index: 10;
+    outline: 1px solid hsl(var(--foreground));
+}
+
+/* ── Charts ───────────────────────────────────────────────────────────────── */
+.chart-box {
+    position: relative;
+    width: 100%;
+    height: 320px;
+}
+
+.chart-box-tall {
+    position: relative;
+    width: 100%;
+    height: 400px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .grid-2col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-header {
+        padding: 0 1rem;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .nav-links {
+        display: none;
+    }
+}

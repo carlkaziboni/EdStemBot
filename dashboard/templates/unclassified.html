@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Title -->
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Needs Review</h1>
+    <p>Questions flagged with low course material match, ambiguous terminology, or tagged as "Other".</p>
+  </div>
+</div>
+
+<!-- Alert Banner -->
+<div style="border-radius: var(--radius); border: 1px solid hsla(35, 92%, 52%, 0.3); background-color: hsla(35, 92%, 52%, 0.08); padding: 1rem 1.25rem; display: flex; gap: 0.75rem; align-items: flex-start;">
+  <i data-lucide="alert-circle" style="width: 18px; height: 18px; color: hsl(35, 92%, 52%); flex-shrink: 0; margin-top: 2px;"></i>
+  <div style="font-size: 0.875rem;">
+    <div style="font-weight: 600; color: hsl(var(--foreground));">Lecturer Attention Queue</div>
+    <div style="color: hsl(var(--muted-foreground)); margin-top: 2px;">
+      These questions could not be matched with high confidence to the current course notes. Reviewing them can highlight missing lecture coverage, administrative questions (deadlines/GitHub setup), or emerging student confusion.
+    </div>
+  </div>
+</div>
+
+<!-- Review Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-header-row">
+      <div>
+        <h2 class="card-title">Flagged Questions</h2>
+        <p class="card-description">{{ questions|length }} questions currently requiring review</p>
+      </div>
+    </div>
+  </div>
+  <div class="card-content" style="padding: 0;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 90px;">Thread</th>
+            <th>Question</th>
+            <th>Assigned Tag</th>
+            <th>Match</th>
+            <th>Received</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in questions %}
+          <tr>
+            <td style="font-family: var(--font-mono); font-size: 0.75rem; color: hsl(var(--muted-foreground));">
+              #{{ q.thread_id }}
+            </td>
+            <td style="max-width: 520px;">
+              <div style="font-weight: 600; color: hsl(var(--foreground));">{{ q.title }}</div>
+              <div style="font-size: 0.8125rem; color: hsl(var(--muted-foreground)); margin-top: 2px; line-height: 1.4;">
+                {{ q.question_text }}
+              </div>
+            </td>
+            <td>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                {% for t in q.topics %}
+                  <span class="badge badge-secondary">{{ t }}</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              {% if q.confidence_score is not none %}
+                <span class="badge badge-destructive">{{ (q.confidence_score * 100)|round|int }}%</span>
+              {% else %}
+                <span class="badge badge-destructive">0%</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); white-space: nowrap;">
+              {{ q.created_at }}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 3rem; color: hsl(var(--muted-foreground));">
+              <i data-lucide="check-check" style="width: 24px; height: 24px; color: hsl(160, 84%, 49%); margin-bottom: 0.5rem;"></i>
+              <div>No flagged questions requiring attention right now!</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

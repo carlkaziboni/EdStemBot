@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page_title }} — EdStemBot Lecturer Dashboard</title>
+  <meta name="description" content="Real-time analytics and topic trends for Computer Systems on EdStem.">
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <!-- Lucide Icons (shadcn standard icon set) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <!-- Top Navigation Bar (shadcn layout) -->
+  <header class="nav-header">
+    <div class="nav-container">
+      <div class="nav-left">
+        <a href="/" class="brand-wrapper">
+          <div class="brand-logo">ES</div>
+          <div class="brand-title">
+            EdStemBot
+            <span class="course-tag">/ INF2-CS</span>
+          </div>
+        </a>
+
+        <nav class="nav-links">
+          <a href="/" class="nav-item {% if active_page == 'overview' %}active{% endif %}">
+            <i data-lucide="layout-dashboard" style="width: 15px; height: 15px;"></i>
+            Overview
+          </a>
+          <a href="/topics" class="nav-item {% if active_page == 'topics' %}active{% endif %}">
+            <i data-lucide="bar-chart-3" style="width: 15px; height: 15px;"></i>
+            Topics & Trends
+          </a>
+          <a href="/unclassified" class="nav-item {% if active_page == 'unclassified' %}active{% endif %}">
+            <i data-lucide="alert-triangle" style="width: 15px; height: 15px;"></i>
+            Needs Review
+          </a>
+        </nav>
+      </div>
+
+      <div class="nav-right">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span>Live Read-Only</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="location.reload()" title="Refresh Data">
+          <i data-lucide="rotate-cw" style="width: 14px; height: 14px;"></i>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+  <script>
+    // Initialize Lucide icons on DOM ready
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

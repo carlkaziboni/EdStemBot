@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Title -->
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Topics & Trends</h1>
+    <p>Analyze student question patterns and 7-day volume per Computer Systems concept.</p>
+  </div>
+</div>
+
+<!-- 7-Day Trend Line Chart -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-header-row">
+      <div>
+        <h2 class="card-title">7-Day Topic Trajectory</h2>
+        <p class="card-description">Daily count of inquiries across top active topics</p>
+      </div>
+    </div>
+  </div>
+  <div class="card-content">
+    <div class="chart-box-tall">
+      <canvas id="trendLineChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Ranked Topics Table & Bar Distribution -->
+<div class="grid-2col">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Ranked Topics</h2>
+      <p class="card-description">All Computer Systems topics ordered by total questions</p>
+    </div>
+    <div class="card-content" style="padding: 0;">
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">Rank</th>
+              <th>Topic</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in topic_counts %}
+            <tr>
+              <td style="font-weight: 600; color: hsl(var(--muted-foreground));">#{{ loop.index }}</td>
+              <td style="font-weight: 500;">{{ item.topic }}</td>
+              <td style="text-align: right;">
+                <span class="badge badge-secondary">{{ item.count }} questions</span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" style="text-align: center; padding: 2rem; color: hsl(var(--muted-foreground));">
+                No topic trends recorded yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Top 10 Topics</h2>
+      <p class="card-description">Relative volume distribution</p>
+    </div>
+    <div class="card-content">
+      <div class="chart-box">
+        <canvas id="topicBarChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

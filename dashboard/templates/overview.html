@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Page Title -->
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Overview</h1>
+    <p>Real-time analytics and topic detection from EdStem course discussions.</p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <span class="badge badge-outline" style="font-size: 0.75rem;">Course: INF2-CS (3465)</span>
+    <span class="badge badge-outline" style="font-size: 0.75rem;">Model: Claude Haiku</span>
+  </div>
+</div>
+
+<!-- shadcn Metric / KPI Stat Cards -->
+<section class="grid-stats">
+  <div class="stat-card">
+    <div class="stat-header">
+      <span class="stat-title">Total Questions</span>
+      <i data-lucide="message-square" class="stat-icon" style="width: 16px; height: 16px;"></i>
+    </div>
+    <div class="stat-value" id="kpi-total-questions">{{ kpis.total_questions }}</div>
+    <div class="stat-footer">
+      <span>Indexed from EdStem discussions</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span class="stat-title">Active Students</span>
+      <i data-lucide="users" class="stat-icon" style="width: 16px; height: 16px;"></i>
+    </div>
+    <div class="stat-value" id="kpi-unique-students">{{ kpis.unique_students }}</div>
+    <div class="stat-footer">
+      <span>Unique question authors</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span class="stat-title">Questions Today</span>
+      <i data-lucide="clock" class="stat-icon" style="width: 16px; height: 16px;"></i>
+    </div>
+    <div class="stat-value" id="kpi-questions-today">{{ kpis.questions_today }}</div>
+    <div class="stat-footer">
+      <span style="color: hsl(160, 84%, 49%);">● Real-time stream active</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span class="stat-title">Classification Rate</span>
+      <i data-lucide="check-circle-2" class="stat-icon" style="width: 16px; height: 16px;"></i>
+    </div>
+    <div class="stat-value">{{ kpis.classifiable_rate }}%</div>
+    <div class="stat-footer">
+      {% if kpis.unclassified_count > 0 %}
+        <span class="badge badge-destructive" style="padding: 0 0.375rem; font-size: 0.7rem;">
+          {{ kpis.unclassified_count }} need review
+        </span>
+      {% else %}
+        <span>All questions assigned to topics</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Visualizations Row -->
+<div class="grid-2col">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-row">
+        <div>
+          <h2 class="card-title">Topic Breakdown</h2>
+          <p class="card-description">Number of student questions categorized by Computer Systems topic</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-content">
+      <div class="chart-box">
+        <canvas id="topicBarChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Topic Share</h2>
+      <p class="card-description">Top topics by percentage share</p>
+    </div>
+    <div class="card-content">
+      <div class="chart-box">
+        <canvas id="topicDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Weekly Activity Heatmap -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-header-row">
+      <div>
+        <h2 class="card-title">Activity Heatmap</h2>
+        <p class="card-description">Question frequency by day of week and hour of day (00:00–23:00)</p>
+      </div>
+    </div>
+  </div>
+  <div class="card-content">
+    <div id="activityHeatmap" class="heatmap-grid"></div>
+  </div>
+</div>
+
+<!-- Recent Questions Table (shadcn table style) -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-header-row">
+      <div>
+        <h2 class="card-title">Recent Questions</h2>
+        <p class="card-description">Latest student questions received and classified from EdStem</p>
+      </div>
+    </div>
+  </div>
+  <div class="card-content" style="padding: 0;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Topics</th>
+            <th>RAG Match</th>
+            <th>Received</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in recent_questions %}
+          <tr>
+            <td style="max-width: 520px;">
+              <div style="font-weight: 600; color: hsl(var(--foreground));">{{ q.title }}</div>
+              <div style="font-size: 0.8125rem; color: hsl(var(--muted-foreground)); margin-top: 2px;">
+                {{ q.snippet }}
+              </div>
+            </td>
+            <td>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                {% for t in q.topics %}
+                  <span class="badge badge-topic">{{ t }}</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              {% if q.confidence_score is not none %}
+                {% if q.confidence_score >= 0.7 %}
+                  <span class="badge badge-success">{{ (q.confidence_score * 100)|round|int }}%</span>
+                {% elif q.confidence_score >= 0.4 %}
+                  <span class="badge badge-warning">{{ (q.confidence_score * 100)|round|int }}%</span>
+                {% else %}
+                  <span class="badge badge-outline">{{ (q.confidence_score * 100)|round|int }}%</span>
+                {% endif %}
+              {% else %}
+                <span style="color: hsl(var(--muted-foreground)); font-size: 0.75rem;">—</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); white-space: nowrap;">
+              {{ q.created_at }}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="text-align: center; padding: 2.5rem; color: hsl(var(--muted-foreground));">
+              No questions logged yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

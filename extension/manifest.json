@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "EdStemBot Study Helper",
+  "version": "0.1.0",
+  "description": "Preview an AI answer and take inline multiple-choice quizzes on EdStem threads. Read-only: nothing on EdStem is changed or posted.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://edstem.org/*", "https://*.edstem.org/*"],
+      "js": ["selectors.js", "panel.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html"
+}
