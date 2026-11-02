@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12151d" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Ask askEd anything about the askEd project, or try a short Computer Systems quiz.">
+  <title>askEd</title>
+  <link rel="stylesheet" href="/static/css/live.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="brand"><h1>askEd</h1><span>ask anything about askEd</span></header>
+    <p class="notice">AI assistant. Anonymous: please don't enter personal details. Answers come from approved askEd documents and can be wrong. Questions you submit are stored and may be shown anonymously.</p>
+    <noscript><p class="err">This page needs JavaScript to work. Please turn it on and reload.</p></noscript>
+
+    <div class="tabs" role="tablist" aria-label="askEd sections">
+      <button class="tab on" id="tab-ask" role="tab" aria-selected="true" aria-controls="pane-ask">Ask a question</button>
+      <button class="tab" id="tab-quiz" role="tab" aria-selected="false" aria-controls="pane-quiz" tabindex="-1">Computer Systems quiz</button>
+    </div>
+
+    <section id="pane-ask" role="tabpanel" aria-labelledby="tab-ask">
+      <form class="card" id="ask-form" autocomplete="off">
+        <label class="sr-only" for="q">Your question about askEd</label>
+        <textarea id="q" name="question" maxlength="500" rows="3" enterkeyhint="send"
+                  placeholder="Type your question, or tap one below"></textarea>
+        <div class="row">
+          <span class="count" id="count" aria-hidden="true">0 / 500</span>
+          <button class="primary" id="send" type="submit">Ask askEd</button>
+        </div>
+      </form>
+      <div id="ask-out" role="status" aria-live="polite"></div>
+      <div class="suggest" id="suggest" aria-label="Suggested questions"></div>
+    </section>
+
+    <section id="pane-quiz" class="hidden" role="tabpanel" aria-labelledby="tab-quiz">
+      <div class="card" id="quiz-card" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="/static/js/ask.js"></script>
+</body>
+</html>

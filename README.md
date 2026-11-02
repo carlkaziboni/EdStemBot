@@ -19,6 +19,7 @@ Nothing in this project posts to, edits, or otherwise changes anything on EdStem
 - [Lecturer dashboard](#lecturer-dashboard)
 - [Chrome extension](#chrome-extension)
 - [Extension API reference](#extension-api-reference)
+- [askEd Live (talk demo)](#asked-live-talk-demo)
 - [Extending the project](#extending-the-project)
 - [Directory structure](#directory-structure)
 - [Testing](#testing)
@@ -178,6 +179,15 @@ All settings are read from environment variables or `.env` (see `config/settings
 | `CHROMA_COLLECTION` | `course_materials` | ChromaDB collection name. |
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | sentence-transformers model. |
 | `EXTENSION_SECRET` | empty | Shared secret for the Chrome extension API. The `/ext/*` endpoints return 503 until this is set. |
+| `APP_MODE` | `full` | `live` mounts only the audience and presenter routes (public deployment). |
+| `PRESENTER_KEY` | empty | Secret for `/present`, `/live/stats`, `/live/reset`. Those return 503 until set. |
+| `PUBLIC_BASE_URL` | empty | Public https URL encoded in the QR code. Falls back to the request URL. |
+| `EMBEDDING_BACKEND` | `sentence-transformers` | `fastembed` is a much lighter ONNX runtime for small hosts. |
+| `LIVE_MIN_ATTEMPTS` | `5` | Quiz answers needed before a topic is ranked on the reveal page. |
+| `LIVE_DAILY_ASK_CAP` | `500` | Max audience questions answered per day (bounds LLM spend). |
+| `ABOUT_COLLECTION` | `askEd_about` | ChromaDB collection for the approved askEd documents. |
+| `ABOUT_DOCS_DIR` | `./data/about` | Folder of approved askEd documents. |
+| `QUIZ_BANK_PATH` | `./data/quiz_bank.json` | Reviewed quiz questions served to the audience. |
 | `DASHBOARD_HOST` | `0.0.0.0` | Interface to bind. Use `127.0.0.1` to keep the server local. |
 | `DASHBOARD_PORT` | `8000` | Port for the dashboard and extension API. |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
@@ -378,6 +388,80 @@ CORS allows only `chrome-extension://` origins and the `POST` method.
 
 ---
 
+## askEd Live (talk demo)
+
+A public, anonymous audience mode for presentations. Attendees scan a QR code, ask askEd questions about askEd itself, and take a short Computer Systems quiz. The presenter then reveals which topics the room found hardest.
+
+**Pages**
+
+| Page | Path | Who |
+|------|------|-----|
+| Audience | `/ask` (deep link to the quiz: `/ask#quiz`) | anyone with the QR code |
+| Presenter | `/present?key=<PRESENTER_KEY>` | presenter only. Opens on the QR code and join count; press Space (or the button) to switch to the live reveal. `&view=results` opens the reveal directly. |
+
+**What askEd knows.** Answers come only from an isolated ChromaDB collection (`askEd_about`) built from approved documents: `data/about/teachathon_proposal.md`, `data/about/askEd_faq.md` and this README. Course notes and EdStem threads are never indexed there. Each answer cites the document and section it used. If nothing relevant is found, or the model reports the context does not answer the question, askEd says it does not know instead of guessing, and the presenter dashboard counts that question under "need follow-up". Edit the FAQ to change what askEd can say; the FAQ labels every claim as Implemented, Prototype limitation, Idea, Not evaluated or Unknown so answers stay honest about what exists.
+
+```bash
+python scripts/ingest_about.py        # run after editing data/about/*.md or this README
+```
+
+**The quiz.** Questions are served from `data/quiz_bank.json` (no model call at quiz time, so it is fast and free). Generate a draft once, then review and edit it by hand before the talk:
+
+```bash
+python scripts/generate_quiz_bank.py --per-topic 4
+```
+
+**Run locally**
+
+```bash
+APP_MODE=live PRESENTER_KEY=choose-a-long-secret python bot/main.py
+# open http://localhost:8000/present?key=choose-a-long-secret
+```
+
+**Rehearse.** Simulate an audience, look at the reveal, then clear everything:
+
+```bash
+python scripts/simulate_audience.py --url http://localhost:8000 --key <PRESENTER_KEY> --people 60
+python scripts/simulate_audience.py --url http://localhost:8000 --key <PRESENTER_KEY> --reset
+```
+
+**Deploy on Render.** The repo ships a `Dockerfile`, `.dockerignore`, `docker-entrypoint.sh` and a `render.yaml` Blueprint (one always-on web service plus a 1 GB disk for SQLite).
+
+1. Commit and push everything, including `data/quiz_bank.json` and `data/about/`. The image is built from the repo, so anything not pushed is not deployed.
+2. In Render choose **New > Blueprint**, pick this repo, and apply. Render builds the Docker image (about 5 to 10 minutes the first time).
+3. In the service's Environment tab set `ANTHROPIC_API_KEY`, `PRESENTER_KEY` (any long random string) and, once you know the URL, `PUBLIC_BASE_URL` (for example `https://asked-live.onrender.com`). Redeploy so the QR code encodes the right address.
+4. Open `https://<your-service>.onrender.com/healthz`, then `/present?key=<PRESENTER_KEY>`.
+
+What the image contains: only the live-mode runtime (no torch), the approved documents already indexed (`data/about/*.md` plus this README), and the embedding model. Course PDFs, `.env`, local databases and `chroma_db` are excluded by `.dockerignore`, and no EdStem token is needed. The app runs as a non-root user. Because the index is built into the image, edit the FAQ or README and redeploy to change what askEd knows.
+
+Test the image locally before deploying:
+
+```bash
+docker build -t asked-live .
+docker run --rm -p 8000:8000 \
+  -e ANTHROPIC_API_KEY=... -e PRESENTER_KEY=choose-a-long-secret \
+  -e PUBLIC_BASE_URL=http://localhost:8000 \
+  -v asked-data:/data asked-live
+# then open http://localhost:8000/present?key=choose-a-long-secret
+```
+
+**Talk-day checklist**
+1. Deploy, then open `/healthz`.
+2. Open `/present?key=...` on the projector machine and confirm the QR resolves on a phone using mobile data, not the venue Wi-Fi.
+3. Ask a few questions and take the quiz from two or three phones; confirm the reveal updates.
+4. Run `--reset` to clear rehearsal data just before you start.
+5. After the talk, reset again or delete the service. Audience questions are stored in the deployment's database until you do.
+
+**What the numbers mean.** The reveal ranks topics by the share of quiz answers that were incorrect, and topics with fewer than `LIVE_MIN_ATTEMPTS` answers are shown greyed out and not ranked. That is performance on a few quiz questions, not measured understanding or self-reported confidence, and the room is a small, self-selected sample. Question counts per topic show interest, not necessarily confusion.
+
+**Known limitations**
+- The presenter key is passed in the page URL, so treat the URL as secret and do not screen-share the address bar.
+- Sessions are an anonymous ID in the phone's storage. Rate limits are per ID plus a daily cap, held in memory, so a restart resets them.
+- There is a single live session per deployment; there is no session creation, moderation queue, self-reported confidence rating or CSV export yet.
+- The audience page never shows other attendees' questions, and the presenter reveal shows only aggregate counts.
+
+---
+
 ## Directory structure
 
 ```
@@ -388,6 +472,7 @@ EdStemBot/
 │   ├── main.py                   # Entry point: listener + web server
 │   ├── processor.py              # New thread -> RAG -> classify -> SQLite
 │   ├── study.py                  # Answer preview and quiz generation (extension)
+│   ├── live/                     # askEd Live: about-askEd answers, quiz bank, stats, limits
 │   ├── edstem/
 │   │   ├── client.py             # Read-only REST client
 │   │   ├── websocket.py          # Live listener with auto-reconnect
@@ -413,7 +498,8 @@ EdStemBot/
 │   │   ├── overview.py           # / and /unclassified
 │   │   ├── topics.py             # /topics
 │   │   ├── api.py                # /api/v1/* JSON endpoints
-│   │   └── extension.py          # /ext/* endpoints for the extension
+│   │   ├── extension.py          # /ext/* endpoints for the extension
+│   │   └── live.py               # /ask, /live/*, /present (askEd Live)
 │   ├── templates/                # Jinja2 templates
 │   └── static/                   # CSS and JavaScript
 ├── extension/
@@ -424,16 +510,22 @@ EdStemBot/
 │   ├── background.js             # Service worker: calls the local API
 │   └── options.html / options.js # Server URL and secret
 ├── data/
-│   └── course_materials/         # Drop PDFs here
+│   ├── course_materials/         # Drop PDFs here
+│   └── about/                    # Approved askEd documents for askEd Live
 ├── scripts/
 │   ├── ingest_materials.py       # Index PDFs into ChromaDB
 │   ├── learn_staff_answers.py    # Index staff-answered threads
+│   ├── ingest_about.py           # Index the approved askEd documents
+│   ├── generate_quiz_bank.py     # Draft quiz questions for askEd Live
+│   ├── simulate_audience.py      # Rehearse the reveal page
 │   └── seed_db.py                # Seed sample analytics data
 └── tests/
     ├── test_analytics.py
     ├── test_edstem_client.py
     ├── test_rag.py
-    └── test_extension_api.py
+    ├── test_extension_api.py
+    ├── test_live.py
+    └── test_about.py
 ```
 
 ---

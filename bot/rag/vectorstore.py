@@ -22,6 +22,7 @@ class RetrievedChunk:
     page: int
     chunk_index: int
     distance: float  # lower = more similar (L2) or 1 - cosine
+    section: str = ""  # heading path, for sources that have one (e.g. askEd docs)
 
 
 class VectorStore:
@@ -131,6 +132,7 @@ class VectorStore:
                 page=meta.get("page", 0),
                 chunk_index=meta.get("chunk_index", 0),
                 distance=dist,
+                section=meta.get("section", ""),
             ))
 
         return chunks

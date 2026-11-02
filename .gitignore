@@ -23,6 +23,9 @@ env/
 # ChromaDB vector store
 chroma_db/
 
+# Embedding model cache (fastembed)
+.fastembed_cache/
+
 # Logs
 *.log
 logs/

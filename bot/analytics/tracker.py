@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from bot.analytics.models import Base, QuestionLog, TopicTrend
 from bot.edstem.models import Thread
+from bot.live import models as _live_models  # noqa: F401  (registers tables on Base)
 from config.settings import settings
 
 logger = logging.getLogger(__name__)

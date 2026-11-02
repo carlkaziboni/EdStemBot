@@ -122,7 +122,7 @@ window.EdPanel = (() => {
     root.append(el("style", { textContent: CSS }));
 
     const box = el("div", { className: "box" });
-    const header = el("header", {}, el("span", { textContent: "EdStemBot study helper" }), el("span", { className: "chev", textContent: "▾" }));
+    const header = el("header", {}, el("span", { textContent: "askEd study helper" }), el("span", { className: "chev", textContent: "▾" }));
     const content = el("div", { className: "body" });
     box.append(header, content);
     root.append(box);

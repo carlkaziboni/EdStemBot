@@ -89,6 +89,38 @@ class Settings(BaseSettings):
         default="all-MiniLM-L6-v2",
         description="Sentence-transformers model name",
     )
+    embedding_backend: Literal["sentence-transformers", "fastembed"] = Field(
+        default="sentence-transformers",
+        description="Embedding runtime. fastembed (ONNX) is much lighter for small hosts.",
+    )
+
+    # ── askEd Live (audience Q&A + quiz) ──────────────────────────────────────
+    app_mode: Literal["full", "live"] = Field(
+        default="full",
+        description="'live' mounts only the public audience routes and presenter pages.",
+    )
+    public_base_url: str = Field(
+        default="",
+        description="Public https URL encoded in the QR code, e.g. https://asked.onrender.com",
+    )
+    presenter_key: str = Field(
+        default="",
+        description="Secret for the presenter page, stats and reset endpoints",
+    )
+    live_min_attempts: int = Field(
+        default=5,
+        description="Minimum quiz attempts before a topic is ranked on the reveal page",
+    )
+    live_daily_ask_cap: int = Field(
+        default=500,
+        description="Maximum audience questions answered per day (bounds LLM spend)",
+    )
+    quiz_bank_path: str = Field(default="./data/quiz_bank.json")
+    about_collection: str = Field(
+        default="askEd_about",
+        description="ChromaDB collection holding the approved askEd documents (isolated from course notes)",
+    )
+    about_docs_dir: str = Field(default="./data/about")
 
     # ── Dashboard ─────────────────────────────────────────────────────────────
     dashboard_host: str = Field(default="0.0.0.0")
