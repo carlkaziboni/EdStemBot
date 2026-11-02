@@ -35,10 +35,10 @@ Rewrite ONLY the three wrong answers:
 - Each must be a plausible misconception that a student who half-understands the topic might believe, and must still be clearly wrong.
 - Each must be about the same length and specificity as the correct answer (within roughly 10 percent, neither noticeably longer nor shorter), with similar structure and wording style.
 - Do not copy the correct answer or make any wrong answer partially correct.
-- Never mention "the notes", "the text" or "according to".
+- Never mention "the notes", "the text", "the FAQ", "the proposal", "the materials" or "according to".
 Return ONLY JSON: {"wrong": ["...", "...", "..."]}"""
 
-REFERENCE = re.compile(r"\b(the notes|the text|the passage|the course material|according to)\b", re.I)
+REFERENCE = re.compile(r"\b(the notes|the text|the passage|the course material|the faq|the proposal|the readme|the materials|the documents|according to)\b", re.I)
 
 
 def even_positions(questions: list[dict]) -> None:

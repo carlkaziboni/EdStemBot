@@ -217,3 +217,24 @@ async def test_live_mode_does_not_mount_private_routes(live):
     for path in ("/", "/topics", "/unclassified", "/api/v1/kpis", "/docs", "/openapi.json"):
         assert (await live.get(path)).status_code == 404, path
     assert (await live.post("/ext/answer", json={"title": "t"})).status_code == 404
+
+
+def test_shipped_quiz_bank_is_valid_and_covers_every_askEd_topic():
+    from pathlib import Path
+
+    from bot.live.about import TOPICS
+
+    bank_path = Path(__file__).resolve().parent.parent / "data" / "quiz_bank.json"
+    bank = QuizBank.load(bank_path)  # raises on any malformed question or duplicate id
+    items = list(bank.lookup().values())
+    by_topic = {t: [q for q in items if q["topic"] == t] for t in TOPICS[:-1]}  # all but "Other / uncertain"
+    assert all(len(qs) >= 3 for qs in by_topic.values()), {t: len(q) for t, q in by_topic.items()}
+    assert {q["topic"] for q in items} <= set(TOPICS)
+    # Option positions must not carry a signal: no letter holds more than 40% of correct answers.
+    counts = [sum(1 for q in items if q["answer_index"] == i) for i in range(4)]
+    assert max(counts) <= 0.4 * len(items), counts
+    # Questions must stand alone for an audience that has not seen the source documents.
+    import re
+
+    ref = re.compile(r"\b(the notes|the faq|the proposal|the readme|the materials|according to)\b", re.I)
+    assert not [q["id"] for q in items if ref.search(q["q"] + " ".join(q["options"]))]

@@ -390,7 +390,7 @@ CORS allows only `chrome-extension://` origins and the `POST` method.
 
 ## askEd Live (talk demo)
 
-A public, anonymous audience mode for presentations. Attendees scan a QR code, ask askEd questions about askEd itself, and take a short Computer Systems quiz. The presenter then reveals which topics the room found hardest.
+A public, anonymous audience mode for presentations. Attendees scan a QR code, ask askEd questions about askEd itself, and take a short quiz about askEd. The presenter then reveals which askEd topics the room found hardest.
 
 **Pages**
 
@@ -405,10 +405,11 @@ A public, anonymous audience mode for presentations. Attendees scan a QR code, a
 python scripts/ingest_about.py        # run after editing data/about/*.md or this README
 ```
 
-**The quiz.** Questions are served from `data/quiz_bank.json` (no model call at quiz time, so it is fast and free). Generate a draft once, then review and edit it by hand before the talk:
+**The quiz.** Questions are served from `data/quiz_bank.json` (no model call at quiz time, so it is fast and free). The bundled bank has 32 questions about askEd, four for each askEd topic, written from the proposal and FAQ, so they test what the talk says. To produce a fresh draft (AI-written, then length-balanced), then review and edit it by hand:
 
 ```bash
-python scripts/generate_quiz_bank.py --per-topic 4
+python scripts/generate_quiz_bank.py --set about --per-topic 5   # use --set course for Computer Systems questions
+python scripts/balance_quiz_bank.py
 ```
 
 **Run locally**

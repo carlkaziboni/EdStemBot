@@ -1,13 +1,18 @@
 """
-Generate a draft quiz bank for askEd Live from the ingested course notes.
+Generate a draft quiz bank for askEd Live.
+
+Two question sets:
+  --set about   (default for the talk) questions about askEd itself, drawn from the approved
+                askEd documents, one group per askEd topic (RAG, privacy, ...).
+  --set course  Computer Systems questions drawn from the ingested course notes.
 
 Run this locally once, then REVIEW AND EDIT data/quiz_bank.json by hand before
 the talk: LLM-written distractors are sometimes ambiguous or wrong, and the
 reveal slide is only as trustworthy as the questions behind it.
 
 Usage:
-    python scripts/generate_quiz_bank.py [--per-topic 4] [--topics "Cache,Virtual Memory"]
-                                         [--out data/quiz_bank.json]
+    python scripts/generate_quiz_bank.py [--set about|course] [--per-topic 4]
+                                         [--topics "Cache,Virtual Memory"] [--out data/quiz_bank.json]
 """
 
 from __future__ import annotations
@@ -24,13 +29,28 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bot.llm import get_llm_provider
-from bot.llm.prompts import COURSE_TOPICS, QUIZ_SYSTEM, QUIZ_USER
+from bot.live.about import TOPICS as ABOUT_TOPICS
+from bot.llm.prompts import ABOUT_QUIZ_SYSTEM, COURSE_TOPICS, QUIZ_SYSTEM, QUIZ_USER
 from bot.rag import Retriever, VectorStore, get_embedding_model
 from bot.study import parse_quiz
 from config.settings import settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("scripts.generate_quiz_bank")
+
+
+# What to retrieve for each askEd topic. The README is excluded as a quiz source: it is full of
+# implementation detail that makes trivia, and the audience heard the talk, not the README.
+ABOUT_QUERIES = {
+    "How it works / RAG": "how askEd retrieves relevant material and generates grounded, cited answers",
+    "Hallucinations & reliability": "how askEd handles hallucinations, confidence scores and not knowing an answer",
+    "Privacy & security": "privacy and security: third-party model providers, read-only access, anonymous questions",
+    "EdStem integration": "how askEd connects to EdStem, read-only access, what it never does on the forum",
+    "Student experience": "what students get from the Chrome extension: answer preview and quiz",
+    "Lecturer analytics": "the lecturer dashboard, topic trends, needs-review queue, what question counts mean",
+    "Deployment & scalability": "how askEd is deployed, scalability limits, swappable language model providers",
+    "Educational impact": "educational impact, expected benefits, risks, and what has not been evaluated",
+}
 
 
 def shuffle_options(question: dict, rng: random.Random) -> dict:
@@ -46,15 +66,28 @@ def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
-async def generate_for_topic(retriever: Retriever, llm, topic: str, n: int) -> list[dict]:
-    chunks = retriever.retrieve(f"{topic} in computer systems")
+async def generate_for_topic(
+    retriever: Retriever, llm, topic: str, n: int, question_set: str = "course"
+) -> list[dict]:
+    if question_set == "about":
+        chunks = [c for c in retriever.retrieve(ABOUT_QUERIES[topic]) if c.source != "askEd README"][:6]
+        system = ABOUT_QUIZ_SYSTEM
+    else:
+        chunks = retriever.retrieve(f"{topic} in computer systems")
+        system = QUIZ_SYSTEM
     if not chunks:
-        logger.warning("No notes matched '%s'; skipping", topic)
+        logger.warning("No material matched '%s'; skipping", topic)
         return []
     context = retriever.format_context(chunks)
-    prompt = QUIZ_USER.format(n=n, context=context, question=f"Topic: {topic}")
+    if question_set == "about":
+        prompt = (
+            f'Write {n} multiple-choice questions on the topic "{topic}" for an audience that has just '
+            f"heard a talk about askEd.\n\nContext:\n{context}"
+        )
+    else:
+        prompt = QUIZ_USER.format(n=n, context=context, question=f"Topic: {topic}")
     for attempt in range(2):
-        raw = await llm.generate(QUIZ_SYSTEM, prompt, temperature=0.5, max_tokens=2500)
+        raw = await llm.generate(system, prompt, temperature=0.5, max_tokens=2500)
         try:
             questions = parse_quiz(raw, n)
             break
@@ -71,27 +104,34 @@ async def generate_for_topic(retriever: Retriever, llm, topic: str, n: int) -> l
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a draft askEd quiz bank.")
-    parser.add_argument("--per-topic", type=int, default=4)
+    parser.add_argument("--set", dest="question_set", choices=["about", "course"], default="about")
+    parser.add_argument("--per-topic", type=int, default=5)
     parser.add_argument("--topics", default="", help="Comma-separated subset of topics")
     parser.add_argument("--out", default=settings.quiz_bank_path)
     args = parser.parse_args()
 
-    topics = [t.strip() for t in args.topics.split(",") if t.strip()] or [
-        t for t in COURSE_TOPICS if t != "Other"
-    ]
-    unknown = [t for t in topics if t not in COURSE_TOPICS]
+    about = args.question_set == "about"
+    valid = [t for t in (ABOUT_TOPICS if about else COURSE_TOPICS) if not t.startswith("Other")]
+    topics = [t.strip() for t in args.topics.split(",") if t.strip()] or valid
+    unknown = [t for t in topics if t not in valid]
     if unknown:
-        sys.exit(f"Unknown topics: {unknown}. Valid: {COURSE_TOPICS}")
+        sys.exit(f"Unknown topics: {unknown}. Valid: {valid}")
 
     vectorstore = VectorStore(
-        persist_dir=settings.chroma_persist_dir, collection_name=settings.chroma_collection
+        persist_dir=settings.chroma_persist_dir,
+        collection_name=settings.about_collection if about else settings.chroma_collection,
     )
-    retriever = Retriever(vectorstore, get_embedding_model(settings.embedding_model), n_results=8)
+    retriever = Retriever(
+        vectorstore,
+        get_embedding_model(settings.embedding_model),
+        n_results=12 if about else 8,
+        max_distance=0.8 if about else 0.6,
+    )
     llm = get_llm_provider(settings.llm_provider)
 
     questions: list[dict] = []
     for topic in topics:
-        got = await generate_for_topic(retriever, llm, topic, args.per_topic)
+        got = await generate_for_topic(retriever, llm, topic, args.per_topic, args.question_set)
         logger.info("%s: %d questions", topic, len(got))
         questions.extend(got)
 
