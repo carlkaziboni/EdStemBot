@@ -35,16 +35,18 @@ class Retriever:
         vectorstore: VectorStore,
         embedder: EmbeddingModel,
         n_results: int = 5,
+        max_distance: float = _MAX_DISTANCE,
     ) -> None:
         self.vectorstore = vectorstore
         self.embedder = embedder
         self.n_results = n_results
+        self.max_distance = max_distance
 
     def retrieve(self, query: str) -> List[RetrievedChunk]:
         """
         Retrieve the most relevant chunks for a query string.
 
-        Filters out chunks with cosine distance > _MAX_DISTANCE.
+        Filters out chunks with cosine distance > max_distance.
         Returns an empty list if the vector store is empty.
 
         Args:
@@ -61,7 +63,7 @@ class Retriever:
         chunks = self.vectorstore.query(query_embedding, n_results=self.n_results)
 
         # Filter irrelevant results
-        relevant = [c for c in chunks if c.distance <= _MAX_DISTANCE]
+        relevant = [c for c in chunks if c.distance <= self.max_distance]
 
         if not relevant:
             logger.debug("No relevant chunks found for query (best dist=%.3f)", 
@@ -85,7 +87,6 @@ class Retriever:
             return ""
         parts = []
         for i, chunk in enumerate(chunks, start=1):
-            parts.append(
-                f"[Source: {chunk.source}, Page {chunk.page}]\n{chunk.text}"
-            )
+            where = f"Section: {chunk.section}" if chunk.section else f"Page {chunk.page}"
+            parts.append(f"[Source: {chunk.source}, {where}]\n{chunk.text}")
         return "\n\n---\n\n".join(parts)

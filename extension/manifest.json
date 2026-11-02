@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "EdStemBot Study Helper",
+  "name": "askEd Study Helper",
   "version": "0.1.0",
   "description": "Preview an AI answer and take inline multiple-choice quizzes on EdStem threads. Read-only: nothing on EdStem is changed or posted.",
   "permissions": ["storage"],

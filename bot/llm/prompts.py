@@ -62,7 +62,10 @@ Base every question strictly on the provided course material.
 Rules:
 - Return ONLY a JSON object: {"questions": [{"q": str, "options": [4 strings], "answer_index": 0-3, "explanation": str}]}
 - Exactly 4 options per question, exactly one correct, plausible distractors.
-- Vary the position of the correct answer.
+- All four options must be similar in length and detail (within about 20 percent). The correct option must NOT be the longest or the most detailed one; give the wrong options equally specific wording.
+- Distractors should reflect realistic misconceptions, not obviously silly answers.
+- Each question must stand alone: never say "the notes", "the text", "the passage", "the course material" or "according to". Ask about the concept directly.
+- Every question must be about the requested topic itself, not a neighbouring topic.
 - The explanation is one or two sentences saying why the answer is correct.
 - Do not add any text outside the JSON.
 """

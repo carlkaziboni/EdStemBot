@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -19,6 +20,10 @@ from bot.analytics.classifier import TopicClassifier
 from bot.analytics.tracker import AnalyticsTracker
 from bot.edstem.client import EdStemClient
 from bot.edstem.websocket import EdStemWebSocketListener
+from bot.live.about import ABOUT_MAX_DISTANCE, AboutService
+from bot.live.quiz_bank import QuizBank
+from bot.live.ratelimit import RateLimiter
+from bot.live.store import LiveStore
 from bot.llm import get_llm_provider
 from bot.processor import QuestionProcessor
 from bot.rag import Retriever, VectorStore, get_embedding_model
@@ -56,6 +61,10 @@ async def sync_existing_questions(
 
 async def start_listener(processor: QuestionProcessor) -> None:
     """Run the WebSocket listener if credentials are configured."""
+    if settings.app_mode == "live":
+        logger.info("APP_MODE=live: EdStem listener disabled (audience mode only).")
+        return
+
     token = settings.ed_api_token
     course_id = settings.ed_course_id
 
@@ -86,17 +95,18 @@ async def start_listener(processor: QuestionProcessor) -> None:
 
 async def start_dashboard() -> None:
     """Run the FastAPI web dashboard via uvicorn."""
+    port = int(os.environ.get("PORT", settings.dashboard_port))  # Render sets PORT
     config = uvicorn.Config(
         app=app,
         host=settings.dashboard_host,
-        port=settings.dashboard_port,
+        port=port,
         log_level=settings.log_level.lower(),
     )
     server = uvicorn.Server(config)
     logger.info(
         "Starting lecturer dashboard at http://%s:%d",
         settings.dashboard_host if settings.dashboard_host != "0.0.0.0" else "localhost",
-        settings.dashboard_port,
+        port,
     )
     await server.serve()
 
@@ -118,6 +128,10 @@ async def main() -> None:
     )
     retriever = Retriever(vectorstore=vectorstore, embedder=embedder)
 
+    if settings.app_mode == "live":
+        # Load the model now so the first attendee doesn't pay the cold-start cost.
+        await asyncio.to_thread(embedder.encode_single, "warmup")
+
     # 3. Initialize LLM Provider & Classifier
     logger.info("Loading LLM provider (%s)...", settings.llm_provider)
     llm = get_llm_provider(settings.llm_provider)
@@ -132,6 +146,33 @@ async def main() -> None:
 
     # Study helpers for the Chrome extension API
     app.state.study = StudyService(retriever=retriever, llm=llm, classifier=classifier)
+
+    # askEd Live: audience Q&A about askEd itself, from an isolated approved-docs collection
+    about_store = VectorStore(
+        persist_dir=settings.chroma_persist_dir, collection_name=settings.about_collection
+    )
+    if about_store.count() == 0:
+        logger.warning(
+            "About-askEd collection is empty: run scripts/ingest_about.py. "
+            "Audience questions will get a 'not in the materials' reply until then."
+        )
+    app.state.about = AboutService(
+        Retriever(about_store, embedder, n_results=6, max_distance=ABOUT_MAX_DISTANCE), llm
+    )
+
+    # askEd Live: quiz bank and spend limits
+    app.state.live_store = LiveStore(tracker.session_factory)
+    try:
+        app.state.quiz_bank = QuizBank.load(settings.quiz_bank_path)
+        logger.info("Loaded %d quiz questions from %s", len(app.state.quiz_bank), settings.quiz_bank_path)
+    except FileNotFoundError:
+        logger.warning(
+            "No quiz bank at %s. Run scripts/generate_quiz_bank.py to create one.",
+            settings.quiz_bank_path,
+        )
+        app.state.quiz_bank = QuizBank([])
+    app.state.limiter = RateLimiter(per_window=5, window_s=60, daily_cap=settings.live_daily_ask_cap)
+    app.state.ask_semaphore = asyncio.Semaphore(8)  # cap concurrent LLM calls
 
     # 5. Run WebSocket Listener and Dashboard concurrently
     listener_task = asyncio.create_task(start_listener(processor))

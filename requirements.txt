@@ -23,6 +23,7 @@ aiosqlite>=0.19.0      # Async SQLite driver
 fastapi>=0.115.0       # Web framework for lecturer dashboard
 uvicorn>=0.30.0        # ASGI server
 jinja2>=3.1.0          # HTML templating
+segno>=1.6.0           # QR code generation (askEd Live presenter page)
 python-multipart>=0.0.12  # Form data support
 
 # ── Utilities ───────────────────────────────────────────────────────────────
