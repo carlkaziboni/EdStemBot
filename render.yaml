@@ -1,0 +1,28 @@
+# Render blueprint for askEd Live (public audience Q&A + quiz + presenter page).
+# Builds the Dockerfile in this repo. Secrets are never stored here: set the
+# `sync: false` values in the Render dashboard after creating the Blueprint.
+services:
+  - type: web
+    name: asked-live
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter            # always on; the free tier sleeps and would cold-start mid-talk
+    healthCheckPath: /healthz
+    # SQLite results live on this disk so they survive redeploys. The approved-docs index and
+    # embedding model are baked into the image at build time (disks are not mounted during build).
+    disk:
+      name: asked-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      # APP_MODE=live, EMBEDDING_BACKEND=fastembed, LLM_PROVIDER=claude, DASHBOARD_HOST and
+      # DATABASE_URL are set in the Dockerfile; only deployment-specific values go here.
+      - key: LIVE_DAILY_ASK_CAP
+        value: "500"
+      - key: PUBLIC_BASE_URL     # e.g. https://asked-live.onrender.com (known after first deploy)
+        sync: false
+      - key: PRESENTER_KEY       # long random string; keep it private
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

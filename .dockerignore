@@ -1,0 +1,48 @@
+# Keep secrets, local state and bulky/unneeded files out of the image and the build context.
+
+# Secrets and local config (never ship these)
+.env
+.env.*
+!.env.example
+
+# Local databases and indexes (the image builds its own index; results live on /data)
+*.db
+*.db-shm
+*.db-wal
+chroma_db/
+.fastembed_cache/
+
+# Course material is not used by the public live mode (and stays out of the image)
+data/course_materials/
+
+# Version control, editors, OS
+.git
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Python build/test artefacts and virtualenvs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+logs/
+*.log
+
+# Not needed at runtime
+tests/
+extension/
+requirements.txt
+render.yaml
+Dockerfile
+.dockerignore
