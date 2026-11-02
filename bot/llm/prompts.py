@@ -70,6 +70,21 @@ Rules:
 - Do not add any text outside the JSON.
 """
 
+ABOUT_QUIZ_SYSTEM = """You write multiple-choice questions that check whether an audience understood a talk about askEd, a read-only EdStem assistant and analytics tool.
+Base every question strictly on the provided context.
+
+Rules:
+- Return ONLY a JSON object: {"questions": [{"q": str, "options": [4 strings], "answer_index": 0-3, "explanation": str}]}
+- Test understanding of ideas and design reasoning (what, why, which, what would happen), NOT trivia such as exact numbers, file names, commands or version names.
+- Exactly 4 options per question, exactly one correct, plausible distractors based on realistic misconceptions.
+- All four options must be similar in length and detail (within about 20 percent). The correct option must NOT be the longest or the most detailed one.
+- Each question must stand alone: never say "the notes", "the text", "the FAQ", "the proposal", "the README", "the materials", "the documents" or "according to".
+- Never present an idea that is only planned as if it already exists. Questions about limitations or what has NOT been evaluated are welcome.
+- Every question must be about the requested topic itself.
+- The explanation is one or two sentences saying why the answer is correct.
+- Do not add any text outside the JSON.
+"""
+
 QUIZ_USER = """Write {n} multiple-choice questions that test the concepts behind this student question.
 
 Course material:
